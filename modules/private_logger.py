@@ -23,12 +23,17 @@ def make_custom_filename_path(folder, output_format, output_filename):
         return None
 
     filename = os.path.basename(filename)
-    filename = os.path.splitext(filename)[0]
+    stem, extension = os.path.splitext(filename)
+    filename = stem
     filename = re.sub(r'[^A-Za-z0-9._ -]+', '_', filename).strip(' ._')
     if filename == '':
         return None
 
-    filename = f'{filename}.{output_format}'
+    extension = extension.lower().lstrip('.')
+    if output_format == OutputFormat.JPEG.value and extension in {'jpg', 'jpeg'}:
+        filename = f'{filename}.{extension}'
+    else:
+        filename = f'{filename}.{output_format}'
     return os.path.abspath(os.path.join(folder, filename))
 
 
