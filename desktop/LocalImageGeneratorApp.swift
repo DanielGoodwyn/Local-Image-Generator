@@ -21,6 +21,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     private var launchedServer = false
     private var readinessTimer: Timer?
     private var galleryTimer: Timer?
+    private var generationStatusTimer: Timer?
+    private var generationStartedAt: Date?
+    private var generationBaselineFiles: [String: Date] = [:]
+    private var generationSubmittedName = ""
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -34,6 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         readinessTimer?.invalidate()
         galleryTimer?.invalidate()
+        generationStatusTimer?.invalidate()
         if launchedServer {
             serverProcess?.terminate()
         }
@@ -387,6 +392,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
 
         nativeGenerateButton.isEnabled = false
         nativeStatusLabel.stringValue = "Submitting..."
+        let baseline = imageModificationSnapshot()
 
         let script = """
         (() => {
@@ -411,15 +417,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
           setValue(prompt, promptValue);
           setValue(filename, filenameValue);
           button.click();
-          return { ok: true, message: filenameValue ? `Submitted ${filenameValue}.png` : 'Submitted with automatic filename.' };
+          return { ok: true, message: filenameValue ? `Generating ${filenameValue}...` : 'Generating with automatic filename...' };
         })();
         """
 
         webView.evaluateJavaScript(script) { [weak self] result, error in
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.nativeGenerateButton.isEnabled = true
                 if let error {
+                    self.nativeGenerateButton.isEnabled = true
                     self.nativeStatusLabel.stringValue = "Could not submit: \(error.localizedDescription)"
                     return
                 }
@@ -427,10 +433,85 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
                 let ok = response?["ok"] as? Bool ?? false
                 self.nativeStatusLabel.stringValue = (response?["message"] as? String) ?? (ok ? "Submitted." : "Could not submit.")
                 if ok {
+                    self.beginGenerationStatusTracking(submittedName: filename, baseline: baseline)
                     self.refreshGallery()
+                } else {
+                    self.nativeGenerateButton.isEnabled = true
                 }
             }
         }
+    }
+
+    private func beginGenerationStatusTracking(submittedName: String, baseline: [String: Date]) {
+        generationStatusTimer?.invalidate()
+        generationStartedAt = Date()
+        generationBaselineFiles = baseline
+        generationSubmittedName = submittedName
+        nativeStatusLabel.stringValue = generatingStatusText(elapsed: 0)
+
+        generationStatusTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.updateGenerationStatus()
+        }
+    }
+
+    private func updateGenerationStatus() {
+        guard let startedAt = generationStartedAt else { return }
+        let elapsed = Date().timeIntervalSince(startedAt)
+
+        if let completedURL = completedImageSinceGenerationStarted() {
+            generationStatusTimer?.invalidate()
+            generationStatusTimer = nil
+            generationStartedAt = nil
+            nativeGenerateButton.isEnabled = true
+            nativeStatusLabel.stringValue = "Completed in \(formatDuration(elapsed)): \(completedURL.lastPathComponent)"
+            refreshGallery()
+            return
+        }
+
+        nativeStatusLabel.stringValue = generatingStatusText(elapsed: elapsed)
+    }
+
+    private func generatingStatusText(elapsed: TimeInterval) -> String {
+        let target = generationSubmittedName.isEmpty ? "image" : generationSubmittedName
+        return "Generating \(target)... elapsed \(formatDuration(elapsed))"
+    }
+
+    private func completedImageSinceGenerationStarted() -> URL? {
+        for url in imageFiles() {
+            let currentDate = modificationDate(url)
+            let previousDate = generationBaselineFiles[url.path]
+            if previousDate == nil || abs(currentDate.timeIntervalSince(previousDate!)) > 0.5 {
+                return url
+            }
+        }
+
+        return nil
+    }
+
+    private func imageModificationSnapshot() -> [String: Date] {
+        var snapshot: [String: Date] = [:]
+        for url in imageFiles() {
+            snapshot[url.path] = modificationDate(url)
+        }
+        return snapshot
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let seconds = max(0, seconds)
+        if seconds < 60 {
+            return String(format: "%.1f seconds", seconds)
+        }
+
+        let totalSeconds = Int(seconds.rounded())
+        let minutes = totalSeconds / 60
+        let remainingSeconds = totalSeconds % 60
+        if minutes < 60 {
+            return String(format: "%dm %02ds", minutes, remainingSeconds)
+        }
+
+        let hours = minutes / 60
+        let remainingMinutes = minutes % 60
+        return String(format: "%dh %02dm %02ds", hours, remainingMinutes, remainingSeconds)
     }
 
     @objc private func openImage(_ sender: NSButton) {

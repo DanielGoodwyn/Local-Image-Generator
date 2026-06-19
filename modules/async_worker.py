@@ -7,6 +7,19 @@ import modules.config
 patch_all()
 
 
+def format_duration(seconds):
+    seconds = max(0.0, float(seconds))
+    if seconds < 60:
+        return f'{seconds:.1f} seconds'
+
+    minutes, remaining_seconds = divmod(int(round(seconds)), 60)
+    if minutes < 60:
+        return f'{minutes}m {remaining_seconds:02d}s'
+
+    hours, remaining_minutes = divmod(minutes, 60)
+    return f'{hours}h {remaining_minutes:02d}m {remaining_seconds:02d}s'
+
+
 class AsyncTask:
     def __init__(self, args):
         from modules.flags import Performance, MetadataScheme, ip_list, disabled
@@ -19,6 +32,8 @@ class AsyncTask:
         self.results = []
         self.last_stop = False
         self.processing = False
+        self.started_at = None
+        self.current_task_started_at = None
 
         self.performance_loras = []
 
@@ -341,6 +356,9 @@ def worker():
             output_filename = async_task.output_filename
             if output_filename != '' and len(imgs) > 1:
                 output_filename = f'{output_filename}_{index + 1}'
+            generation_seconds = None
+            if async_task.current_task_started_at is not None:
+                generation_seconds = time.perf_counter() - async_task.current_task_started_at
 
             d = [('Prompt', 'prompt', task['log_positive_prompt']),
                  ('Negative Prompt', 'negative_prompt', task['log_negative_prompt']),
@@ -395,6 +413,9 @@ def worker():
                       async_task.metadata_scheme.value if async_task.save_metadata_to_images else async_task.save_metadata_to_images))
             if output_filename != '':
                 d.append(('Output Filename', 'output_filename', output_filename))
+            if generation_seconds is not None:
+                d.append(('Generation Time', 'generation_time', format_duration(generation_seconds)))
+                d.append(('Generation Seconds', 'generation_seconds', f'{generation_seconds:.2f}'))
             d.append(('Version', 'version', 'Local Image Generator v' + local_image_generator_version.version))
             img_paths.append(log(x, d, metadata_parser, async_task.output_format, task, persist_image,
                                  output_filename=output_filename))
@@ -1078,6 +1099,8 @@ def worker():
     @torch.inference_mode()
     def handler(async_task: AsyncTask):
         preparation_start_time = time.perf_counter()
+        if async_task.started_at is None:
+            async_task.started_at = preparation_start_time
         async_task.processing = True
 
         async_task.outpaint_selections = [o.lower() for o in async_task.outpaint_selections]
@@ -1289,6 +1312,7 @@ def worker():
         for current_task_id, task in enumerate(tasks):
             progressbar(async_task, current_progress, f'Preparing task {current_task_id + 1}/{async_task.image_number} ...')
             execution_start_time = time.perf_counter()
+            async_task.current_task_started_at = execution_start_time
 
             try:
                 imgs, img_paths, current_progress = process_task(all_steps, async_task, callback, controlnet_canny_path,

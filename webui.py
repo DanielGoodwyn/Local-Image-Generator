@@ -30,6 +30,12 @@ def get_task(*args):
 
     return worker.AsyncTask(args=args)
 
+
+def progress_text_with_elapsed(text, start_time):
+    elapsed = time.perf_counter() - start_time
+    return f'{text} Elapsed: {worker.format_duration(elapsed)}'
+
+
 def generate_clicked(task: worker.AsyncTask):
     import ldm_patched.modules.model_management as model_management
 
@@ -41,9 +47,11 @@ def generate_clicked(task: worker.AsyncTask):
         return
 
     execution_start_time = time.perf_counter()
+    task.started_at = execution_start_time
     finished = False
 
-    yield gr.update(visible=True, value=modules.html.make_progress_html(1, 'Waiting for task to start ...')), \
+    yield gr.update(visible=True, value=modules.html.make_progress_html(
+            1, progress_text_with_elapsed('Waiting for task to start ...', execution_start_time))), \
         gr.update(visible=True, value=None), \
         gr.update(visible=False, value=None), \
         gr.update(visible=False)
@@ -63,7 +71,8 @@ def generate_clicked(task: worker.AsyncTask):
                         continue
 
                 percentage, title, image = product
-                yield gr.update(visible=True, value=modules.html.make_progress_html(percentage, title)), \
+                yield gr.update(visible=True, value=modules.html.make_progress_html(
+                        percentage, progress_text_with_elapsed(title, execution_start_time))), \
                     gr.update(visible=True, value=image) if image is not None else gr.update(), \
                     gr.update(), \
                     gr.update(visible=False)
