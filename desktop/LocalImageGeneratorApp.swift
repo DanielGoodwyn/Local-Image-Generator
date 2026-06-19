@@ -7,8 +7,9 @@ private let sourceRoot = "/Users/danielgoodwyn/src/Local Image Generator"
 private let outputRoot = "/Users/danielgoodwyn/Pictures/Local Image Generator"
 private let pythonPath = "/Users/danielgoodwyn/src/Local Image Generator/.venv-mvp/bin/python"
 private let logPath = "/tmp/local-image-generator.log"
+private let launcherLogPath = "/tmp/local-image-generator-launcher.log"
 
-class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, WKNavigationDelegate {
     private var window: NSWindow!
     private var webView: WKWebView!
     private var galleryStack: NSStackView!
@@ -27,11 +28,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     private var generationSubmittedName = ""
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        appendLauncherLog("applicationDidFinishLaunching")
         NSApp.setActivationPolicy(.regular)
         buildMenu()
         buildWindow()
-        refreshGallery()
+        appendLauncherLog("window built")
         startOrReuseServer()
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshGallery()
+            self?.appendLauncherLog("gallery refreshed")
+        }
         NSApp.activate(ignoringOtherApps: true)
     }
 
@@ -63,15 +69,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
             defer: false
         )
         window.title = appName
+        window.minSize = NSSize(width: 560, height: 420)
         window.center()
 
         let splitView = NSSplitView()
         splitView.isVertical = true
         splitView.dividerStyle = .thin
+        splitView.delegate = self
         splitView.translatesAutoresizingMaskIntoConstraints = false
+        splitView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let webContainer = NSView()
         webContainer.translatesAutoresizingMaskIntoConstraints = false
+        webContainer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let webStack = NSStackView()
         webStack.orientation = .vertical
@@ -83,6 +93,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.translatesAutoresizingMaskIntoConstraints = false
+        webView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         webView.loadHTMLString(startingHTML("Starting local generator..."), baseURL: nil)
 
         let controlPanel = buildNativeControlPanel()
@@ -95,21 +106,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
             webStack.trailingAnchor.constraint(equalTo: webContainer.trailingAnchor),
             webStack.topAnchor.constraint(equalTo: webContainer.topAnchor),
             webStack.bottomAnchor.constraint(equalTo: webContainer.bottomAnchor),
-            controlPanel.heightAnchor.constraint(equalToConstant: 118),
-            webView.heightAnchor.constraint(greaterThanOrEqualToConstant: 560)
+            controlPanel.heightAnchor.constraint(equalToConstant: 108),
+            webView.heightAnchor.constraint(greaterThanOrEqualToConstant: 250)
         ])
 
         let galleryPanel = buildGalleryPanel()
+        galleryPanel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         splitView.addArrangedSubview(webContainer)
         splitView.addArrangedSubview(galleryPanel)
 
+        let galleryPreferredWidth = galleryPanel.widthAnchor.constraint(equalToConstant: 300)
+        galleryPreferredWidth.priority = .defaultLow
+
         window.contentView = splitView
         NSLayoutConstraint.activate([
-            webContainer.widthAnchor.constraint(greaterThanOrEqualToConstant: 760),
-            galleryPanel.widthAnchor.constraint(equalToConstant: 330)
+            webContainer.widthAnchor.constraint(greaterThanOrEqualToConstant: 320),
+            galleryPanel.widthAnchor.constraint(greaterThanOrEqualToConstant: 210),
+            galleryPreferredWidth
         ])
 
         window.makeKeyAndOrderFront(nil)
+    }
+
+    func splitView(_ splitView: NSSplitView, constrainMinCoordinate proposedMinimumPosition: CGFloat, ofSubviewAt dividerIndex: Int) -> CGFloat {
+        return 320
+    }
+
+    func splitView(_ splitView: NSSplitView, constrainMaxCoordinate proposedMaximumPosition: CGFloat, ofSubviewAt dividerIndex: Int) -> CGFloat {
+        return max(320, splitView.bounds.width - 210)
     }
 
     private func buildNativeControlPanel() -> NSView {
@@ -132,6 +156,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         nativePromptField.isEditable = true
         nativePromptField.isSelectable = true
         nativePromptField.lineBreakMode = .byTruncatingTail
+        nativePromptField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let filenameLabel = NSTextField(labelWithString: "Filename")
         filenameLabel.font = NSFont.systemFont(ofSize: 12, weight: .semibold)
@@ -140,6 +165,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         nativeFilenameField.placeholderString = "Optional, e.g. snowy-owl"
         nativeFilenameField.isEditable = true
         nativeFilenameField.isSelectable = true
+        nativeFilenameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         nativeGenerateButton = NSButton(title: "Generate image", target: self, action: #selector(generateFromNativeControls))
         nativeGenerateButton.bezelStyle = .rounded
@@ -149,6 +175,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         nativeStatusLabel.textColor = .secondaryLabelColor
         nativeStatusLabel.font = NSFont.systemFont(ofSize: 11)
         nativeStatusLabel.lineBreakMode = .byTruncatingMiddle
+        nativeStatusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let formRow = NSGridView(views: [
             [promptLabel, nativePromptField],
@@ -158,7 +185,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         formRow.rowSpacing = 6
         formRow.columnSpacing = 8
         formRow.column(at: 0).xPlacement = .trailing
-        formRow.column(at: 1).width = 640
 
         let actionRow = NSStackView()
         actionRow.orientation = .horizontal
@@ -175,8 +201,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
             root.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
             root.topAnchor.constraint(equalTo: panel.topAnchor),
             root.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
-            nativePromptField.widthAnchor.constraint(greaterThanOrEqualToConstant: 540),
-            nativeFilenameField.widthAnchor.constraint(greaterThanOrEqualToConstant: 280)
+            nativePromptField.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
+            nativeFilenameField.widthAnchor.constraint(greaterThanOrEqualToConstant: 140)
         ])
 
         return panel
@@ -196,11 +222,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
 
         let title = NSTextField(labelWithString: "Saved images")
         title.font = NSFont.boldSystemFont(ofSize: 18)
+        title.lineBreakMode = .byTruncatingTail
 
         statusLabel = NSTextField(labelWithString: outputRoot)
         statusLabel.font = NSFont.systemFont(ofSize: 11)
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.lineBreakMode = .byTruncatingMiddle
+        statusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let buttonRow = NSStackView()
         buttonRow.orientation = .horizontal
@@ -247,7 +275,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
             root.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
             root.topAnchor.constraint(equalTo: panel.topAnchor),
             root.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
-            scrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: 520)
+            scrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: 180)
         ])
 
         galleryTimer = Timer.scheduledTimer(withTimeInterval: 6.0, repeats: true) { [weak self] _ in
@@ -258,8 +286,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     }
 
     private func startOrReuseServer() {
+        appendLauncherLog("checking existing server")
         checkServer { [weak self] reachable in
             guard let self else { return }
+            self.appendLauncherLog("server check result: \(reachable)")
             if reachable {
                 self.loadGenerator()
                 return
@@ -279,6 +309,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
     }
 
     private func startServer() {
+        appendLauncherLog("starting backend process")
         let process = Process()
         process.executableURL = URL(fileURLWithPath: pythonPath)
         process.currentDirectoryURL = URL(fileURLWithPath: sourceRoot)
@@ -317,22 +348,51 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
             try process.run()
             serverProcess = process
             launchedServer = true
+            appendLauncherLog("backend process started pid=\(process.processIdentifier)")
         } catch {
+            appendLauncherLog("backend process failed: \(error.localizedDescription)")
             webView.loadHTMLString(startingHTML("Could not start local generator: \(error.localizedDescription)"), baseURL: nil)
         }
     }
 
     private func checkServer(_ completion: @escaping (Bool) -> Void) {
-        var request = URLRequest(url: serverURL)
-        request.timeoutInterval = 0.8
-        URLSession.shared.dataTask(with: request) { _, response, _ in
-            let ok = (response as? HTTPURLResponse).map { (200..<500).contains($0.statusCode) } ?? false
-            DispatchQueue.main.async { completion(ok) }
-        }.resume()
+        DispatchQueue.global(qos: .utility).async {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/curl")
+            process.arguments = [
+                "-fs",
+                "--max-time", "1",
+                "--output", "/dev/null",
+                serverURL.absoluteString
+            ]
+
+            do {
+                try process.run()
+                process.waitUntilExit()
+                let ok = process.terminationStatus == 0
+                DispatchQueue.main.async { completion(ok) }
+            } catch {
+                DispatchQueue.main.async { completion(false) }
+            }
+        }
     }
 
     private func loadGenerator() {
+        appendLauncherLog("loading generator web view")
         webView.load(URLRequest(url: serverURL))
+    }
+
+    private func appendLauncherLog(_ message: String) {
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let line = "[\(timestamp)] \(message)\n"
+        guard let data = line.data(using: .utf8) else { return }
+        if !FileManager.default.fileExists(atPath: launcherLogPath) {
+            FileManager.default.createFile(atPath: launcherLogPath, contents: nil)
+        }
+        guard let handle = FileHandle(forWritingAtPath: launcherLogPath) else { return }
+        handle.seekToEndOfFile()
+        handle.write(data)
+        try? handle.close()
     }
 
     private func startingHTML(_ message: String) -> String {
@@ -542,7 +602,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         }
 
         for url in files.prefix(80) {
-            galleryStack.addArrangedSubview(galleryItem(for: url))
+            let item = galleryItem(for: url)
+            galleryStack.addArrangedSubview(item)
+            let itemWidth = item.widthAnchor.constraint(equalTo: galleryStack.widthAnchor, constant: -8)
+            itemWidth.priority = .defaultHigh
+            itemWidth.isActive = true
         }
     }
 
@@ -619,9 +683,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         item.addArrangedSubview(buttons)
 
         NSLayoutConstraint.activate([
-            item.widthAnchor.constraint(equalToConstant: 286),
-            imageView.widthAnchor.constraint(equalToConstant: 270),
-            imageView.heightAnchor.constraint(equalToConstant: 190)
+            item.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
+            imageView.widthAnchor.constraint(equalTo: item.widthAnchor, constant: -16),
+            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: 0.70)
         ])
 
         return item
