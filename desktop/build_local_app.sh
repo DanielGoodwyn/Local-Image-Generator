@@ -9,7 +9,7 @@ ICON_SOURCE="$DESKTOP_DIR/assets/local-image-generator-app-icon.png"
 ICONSET="$BUILD_DIR/LocalImageGenerator.iconset"
 ICON_FILE="$BUILD_DIR/LocalImageGenerator.icns"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
-INSTALL_BUNDLE="/Users/danielgoodwyn/Applications/$APP_NAME.app"
+INSTALL_BUNDLE="/Applications/$APP_NAME.app"
 DESKTOP_LINK="/Users/danielgoodwyn/Desktop/$APP_NAME.app"
 
 rm -rf "$APP_BUNDLE"
