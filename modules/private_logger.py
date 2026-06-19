@@ -37,6 +37,19 @@ def make_custom_filename_path(folder, output_format, output_filename):
     return os.path.abspath(os.path.join(folder, filename))
 
 
+def make_unique_filename_path(path):
+    if not os.path.exists(path):
+        return path
+
+    stem, extension = os.path.splitext(path)
+    number = 2
+    while True:
+        candidate = f'{stem}-{number}{extension}'
+        if not os.path.exists(candidate):
+            return candidate
+        number += 1
+
+
 def get_current_html_path(output_format=None):
     output_format = output_format if output_format else modules.config.default_output_format
     date_string, local_temp_filename, only_name = generate_temp_filename(folder=modules.config.path_outputs,
@@ -46,14 +59,14 @@ def get_current_html_path(output_format=None):
 
 
 def log(img, metadata, metadata_parser: MetadataParser | None = None, output_format=None, task=None, persist_image=True,
-        output_filename=None) -> str:
+        output_filename=None, overwrite_existing=False) -> str:
     path_outputs = modules.config.temp_path if args_manager.args.disable_image_log or not persist_image else modules.config.path_outputs
     output_format = output_format if output_format else modules.config.default_output_format
     custom_filename_path = make_custom_filename_path(path_outputs, output_format, output_filename)
     if custom_filename_path is None:
         date_string, local_temp_filename, only_name = generate_temp_filename(folder=path_outputs, extension=output_format)
     else:
-        local_temp_filename = custom_filename_path
+        local_temp_filename = custom_filename_path if overwrite_existing else make_unique_filename_path(custom_filename_path)
         only_name = os.path.basename(local_temp_filename)
         date_string = os.path.basename(os.path.dirname(local_temp_filename))
     os.makedirs(os.path.dirname(local_temp_filename), exist_ok=True)

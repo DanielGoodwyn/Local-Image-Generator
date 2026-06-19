@@ -10,6 +10,8 @@ The normal workflow is now:
 4. Click `Generate image`.
 5. Preview saved images in the right-side `Saved images` panel.
 
+If the requested filename already exists, the desktop app asks whether to save a new numbered file or overwrite. Direct advanced UI saves never overwrite by default; they use the next available suffix such as `name-2.png`.
+
 Generated images save to:
 
 ```text
@@ -70,8 +72,8 @@ Important local changes:
 
 - `desktop/LocalImageGeneratorApp.swift`: native macOS app, auto-starts/reuses the backend, provides native prompt/filename controls, and previews saved images.
 - `webui.py`: sets the page title to `Local Image Generator`, adds `Output Filename`, hides web-only branding, and starts with safe local defaults.
-- `modules/async_worker.py`: carries the requested output filename through the generation task.
-- `modules/private_logger.py`: writes directly to the requested filename when provided.
+- `modules/async_worker.py`: carries the requested output filename and overwrite choice through the generation task.
+- `modules/private_logger.py`: writes directly to the requested filename when available and uses numbered suffixes to avoid accidental overwrites.
 - `modules/config.py`, `modules/sdxl_styles.py`, `config.txt`: local default and visible-name adjustments.
 
 ## Rebuild The Desktop App

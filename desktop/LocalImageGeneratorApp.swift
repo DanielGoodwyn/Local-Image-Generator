@@ -441,12 +441,78 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, WKNavig
         NSWorkspace.shared.open(URL(fileURLWithPath: outputRoot, isDirectory: true))
     }
 
+    private enum OutputFilenameCollisionChoice {
+        case saveNew
+        case overwrite
+        case cancel
+    }
+
+    private func collisionChoice(for filename: String) -> OutputFilenameCollisionChoice? {
+        let existingFiles = existingOutputFiles(for: filename)
+        guard !existingFiles.isEmpty else { return nil }
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "That filename already exists."
+        let existingNames = existingFiles.map { $0.lastPathComponent }.joined(separator: ", ")
+        alert.informativeText = "\(existingNames) already exists in the output folder. Save a new numbered file instead, overwrite the existing file, or cancel."
+        alert.addButton(withTitle: "Save New")
+        alert.addButton(withTitle: "Overwrite")
+        alert.addButton(withTitle: "Cancel")
+
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            return .saveNew
+        case .alertSecondButtonReturn:
+            return .overwrite
+        default:
+            return .cancel
+        }
+    }
+
+    private func existingOutputFiles(for filename: String) -> [URL] {
+        guard let stem = sanitizedOutputStem(from: filename) else { return [] }
+        let root = URL(fileURLWithPath: outputRoot, isDirectory: true)
+        return possibleOutputExtensions(for: filename)
+            .map { root.appendingPathComponent("\(stem).\($0)") }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    private func sanitizedOutputStem(from filename: String) -> String? {
+        let basename = URL(fileURLWithPath: filename).lastPathComponent
+        let stem = (basename as NSString).deletingPathExtension
+        let sanitized = stem
+            .replacingOccurrences(of: "[^A-Za-z0-9._ -]+", with: "_", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet(charactersIn: " ._"))
+        return sanitized.isEmpty ? nil : sanitized
+    }
+
+    private func possibleOutputExtensions(for filename: String) -> [String] {
+        let ext = URL(fileURLWithPath: filename).pathExtension.lowercased()
+        if ["png", "jpg", "jpeg", "webp"].contains(ext) {
+            return [ext]
+        }
+
+        return ["png", "jpg", "jpeg", "webp"]
+    }
+
     @objc private func generateFromNativeControls() {
         let prompt = nativePromptField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let filename = nativeFilenameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !prompt.isEmpty else {
             nativeStatusLabel.stringValue = "Enter a prompt first."
+            return
+        }
+
+        let overwriteExisting: Bool
+        switch collisionChoice(for: filename) {
+        case .saveNew, .none:
+            overwriteExisting = false
+        case .overwrite:
+            overwriteExisting = true
+        case .cancel:
+            nativeStatusLabel.stringValue = "Generation canceled."
             return
         }
 
@@ -458,9 +524,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, WKNavig
         (() => {
           const promptValue = \(jsString(prompt));
           const filenameValue = \(jsString(filename));
+          const overwriteExisting = \(overwriteExisting ? "true" : "false");
+          const overwritePrefix = '__local_image_generator_overwrite__:';
           const setValue = (element, value) => {
             const proto = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
             const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+            setter.call(element, value);
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            element.dispatchEvent(new Event('change', { bubbles: true }));
+          };
+          const setChecked = (element, value) => {
+            const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'checked').set;
             setter.call(element, value);
             element.dispatchEvent(new Event('input', { bubbles: true }));
             element.dispatchEvent(new Event('change', { bubbles: true }));
@@ -470,12 +544,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSSplitViewDelegate, WKNavig
             const label = input.closest('label')?.innerText || input.parentElement?.innerText || '';
             return label.includes('Output Filename') || input.placeholder.includes('koala');
           });
+          const overwrite = document.querySelector('#overwrite_output_filename input[type="checkbox"]');
           const button = document.querySelector('#generate_button');
           if (!prompt || !filename || !button) {
             return { ok: false, message: 'Generator page is still loading.' };
           }
           setValue(prompt, promptValue);
-          setValue(filename, filenameValue);
+          setValue(filename, overwriteExisting && !overwrite ? overwritePrefix + filenameValue : filenameValue);
+          if (overwrite) {
+            setChecked(overwrite, overwriteExisting);
+          }
           button.click();
           return { ok: true, message: filenameValue ? `Generating ${filenameValue}...` : 'Generating with automatic filename...' };
         })();

@@ -127,6 +127,8 @@ The app will save directly as:
 
 This is not a rename-after-generation step. The local save pipeline writes this filename deterministically.
 
+If the filename already exists, the desktop app asks whether to save a new numbered file or overwrite the existing file. Direct use of the embedded advanced UI saves safely by default: the next available name is used, for example `mountain-car-2.png`. Multi-image runs use the same rule, so additional images are saved as numbered versions instead of overwriting the first image.
+
 ## Latest Desktop Proof
 
 The latest verified desktop-app proof was generated from the native `Prompt`, `Filename`, and `Generate image` controls.
@@ -228,7 +230,7 @@ find /Users/danielgoodwyn/Pictures/Local Image Generator -maxdepth 2 -type f -na
 This install is not a pristine upstream checkout. Local changes include:
 
 - `webui.py`: added `Output Filename` field and made preview disabled by default.
-- `modules/async_worker.py`: carries the requested filename through generation.
-- `modules/private_logger.py`: saves directly to the requested filename.
+- `modules/async_worker.py`: carries the requested filename and overwrite choice through generation.
+- `modules/private_logger.py`: saves directly to the requested filename when available and uses numbered suffixes to avoid accidental overwrites.
 - `config.txt`: sets safe local defaults for this Mac.
 - `desktop/LocalImageGeneratorApp.swift`: native macOS wrapper with prompt/filename controls, an embedded generator view, and saved-image gallery.

@@ -6,6 +6,8 @@ import modules.config
 
 patch_all()
 
+OVERWRITE_OUTPUT_FILENAME_PREFIX = '__local_image_generator_overwrite__:'
+
 
 def format_duration(seconds):
     seconds = max(0.0, float(seconds))
@@ -54,6 +56,10 @@ class AsyncTask:
         self.image_number = args.pop()
         self.output_format = args.pop()
         self.output_filename = str(args.pop()).strip()
+        self.overwrite_output_filename = bool(args.pop())
+        if self.output_filename.startswith(OVERWRITE_OUTPUT_FILENAME_PREFIX):
+            self.output_filename = self.output_filename[len(OVERWRITE_OUTPUT_FILENAME_PREFIX):].strip()
+            self.overwrite_output_filename = True
         self.seed = int(args.pop())
         self.read_wildcards_in_order = args.pop()
         self.sharpness = args.pop()
@@ -334,7 +340,8 @@ def worker():
             progressbar(async_task, current_progress, 'Checking for NSFW content ...')
             imgs = default_censor(imgs)
         progressbar(async_task, current_progress, f'Saving image {current_task_id + 1}/{total_count} to system ...')
-        img_paths = save_and_log(async_task, height, imgs, task, use_expansion, width, loras, persist_image)
+        img_paths = save_and_log(async_task, height, imgs, task, use_expansion, width, loras, current_task_id,
+                                 total_count, persist_image)
         yield_result(async_task, img_paths, current_progress, async_task.black_out_nsfw, False,
                      do_not_show_finished_images=not show_intermediate_results or async_task.disable_intermediate_results)
 
@@ -350,12 +357,16 @@ def worker():
             async_task.adaptive_cfg
         )
 
-    def save_and_log(async_task, height, imgs, task, use_expansion, width, loras, persist_image=True) -> list:
+    def save_and_log(async_task, height, imgs, task, use_expansion, width, loras, current_task_id=0, total_count=1,
+                     persist_image=True) -> list:
         img_paths = []
         for index, x in enumerate(imgs):
             output_filename = async_task.output_filename
-            if output_filename != '' and len(imgs) > 1:
-                output_filename = f'{output_filename}_{index + 1}'
+            overwrite_existing = (
+                bool(getattr(async_task, 'overwrite_output_filename', False))
+                and current_task_id == 0
+                and index == 0
+            )
             generation_seconds = None
             if async_task.current_task_started_at is not None:
                 generation_seconds = time.perf_counter() - async_task.current_task_started_at
@@ -413,12 +424,13 @@ def worker():
                       async_task.metadata_scheme.value if async_task.save_metadata_to_images else async_task.save_metadata_to_images))
             if output_filename != '':
                 d.append(('Output Filename', 'output_filename', output_filename))
+                d.append(('Overwrite Existing Output Filename', 'overwrite_output_filename', overwrite_existing))
             if generation_seconds is not None:
                 d.append(('Generation Time', 'generation_time', format_duration(generation_seconds)))
                 d.append(('Generation Seconds', 'generation_seconds', f'{generation_seconds:.2f}'))
             d.append(('Version', 'version', 'Local Image Generator v' + local_image_generator_version.version))
             img_paths.append(log(x, d, metadata_parser, async_task.output_format, task, persist_image,
-                                 output_filename=output_filename))
+                                 output_filename=output_filename, overwrite_existing=overwrite_existing))
 
         return img_paths
 

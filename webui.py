@@ -594,7 +594,12 @@ with shared.gradio_root:
                                          value=modules.config.default_output_format)
                 output_filename = gr.Textbox(label='Output Filename', show_label=True,
                                              placeholder='Optional, e.g. koala', max_lines=1,
-                                             info='Optional. Saves directly with this filename in the output folder; extension comes from Output Format.')
+                                             info='Optional. Saves directly with this filename in the output folder; extension comes from Output Format. Existing names save as the next numbered file.',
+                                             elem_id='output_filename')
+                overwrite_output_filename = gr.Checkbox(label='Overwrite Existing Output Filename',
+                                                        value=False,
+                                                        visible=False,
+                                                        elem_id='overwrite_output_filename')
 
                 negative_prompt = gr.Textbox(label='Negative Prompt', show_label=True, placeholder="Type prompt here.",
                                              info='Describing what you do not want to see.', lines=2,
@@ -989,7 +994,8 @@ with shared.gradio_root:
         ctrls = [currentTask, generate_image_grid]
         ctrls += [
             prompt, negative_prompt, style_selections,
-            performance_selection, aspect_ratios_selection, image_number, output_format, output_filename, image_seed,
+            performance_selection, aspect_ratios_selection, image_number, output_format, output_filename,
+            overwrite_output_filename, image_seed,
             read_wildcards_in_order, sharpness, guidance_scale
         ]
 

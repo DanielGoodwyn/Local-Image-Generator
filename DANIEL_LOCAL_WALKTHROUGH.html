@@ -295,6 +295,7 @@ TOKENIZERS_PARALLELISM=false \
       <p>The app saves directly as:</p>
       <pre><code>/Users/danielgoodwyn/Pictures/Local Image Generator/mountain-car.png</code></pre>
       <p>This is not a rename-after-generation step. The local save pipeline writes this filename deterministically.</p>
+      <p>If the filename already exists, the desktop app asks whether to save a new numbered file or overwrite the existing file. Direct use of the embedded advanced UI saves safely by default: the next available name is used, for example <code>mountain-car-2.png</code>. Multi-image runs use the same rule, so additional images are saved as numbered versions instead of overwriting the first image.</p>
 
       <h3>Latest Desktop Proof</h3>
       <p>The latest verified desktop-app proof was generated from the native <strong>Prompt</strong>, <strong>Filename</strong>, and <strong>Generate image</strong> controls.</p>
@@ -357,8 +358,8 @@ TOKENIZERS_PARALLELISM=false \
       <p>This install is not a pristine upstream checkout. Local changes include:</p>
       <ul>
         <li><code>webui.py</code>: added <strong>Output Filename</strong> field and made preview disabled by default.</li>
-        <li><code>modules/async_worker.py</code>: carries the requested filename through generation.</li>
-        <li><code>modules/private_logger.py</code>: saves directly to the requested filename.</li>
+        <li><code>modules/async_worker.py</code>: carries the requested filename and overwrite choice through generation.</li>
+        <li><code>modules/private_logger.py</code>: saves directly to the requested filename when available and uses numbered suffixes to avoid accidental overwrites.</li>
         <li><code>config.txt</code>: sets safe local defaults for this Mac.</li>
         <li><code>desktop/LocalImageGeneratorApp.swift</code>: native macOS wrapper with prompt/filename controls, an embedded generator view, and saved-image gallery.</li>
       </ul>
