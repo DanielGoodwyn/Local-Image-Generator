@@ -4,7 +4,7 @@ Native macOS wrapper for a local SDXL image-generation backend.
 
 The normal workflow is now:
 
-1. Open `/Users/danielgoodwyn/Desktop/Local Image Generator.app`.
+1. Open `Local Image Generator` from the Dock or `/Applications/Local Image Generator.app`.
 2. Type a prompt in the native `Prompt` field at the top of the window.
 3. Type an optional deterministic filename in the native `Filename` field.
 4. Click `Generate image`.
@@ -35,11 +35,10 @@ Photorealistic wildlife portrait of a red panda standing on a mossy branch, soft
 ## Installed App Paths
 
 ```text
-/Users/danielgoodwyn/Desktop/Local Image Generator.app
-/Users/danielgoodwyn/Applications/Local Image Generator.app
+/Applications/Local Image Generator.app
 ```
 
-The Desktop item is a shortcut to the signed app in `~/Applications`.
+The app is pinned in the Dock. There is no Desktop shortcut.
 
 ## Local Defaults
 
@@ -86,5 +85,5 @@ swiftc /Users/danielgoodwyn/src/Local Image Generator/desktop/LocalImageGenerato
 After copying the binary into the `.app` bundle, sign it ad hoc:
 
 ```bash
-codesign --force --deep --sign - "/Users/danielgoodwyn/Applications/Local Image Generator.app"
+codesign --force --deep --sign - "/Applications/Local Image Generator.app"
 ```

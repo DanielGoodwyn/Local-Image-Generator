@@ -10,7 +10,7 @@ ICONSET="$BUILD_DIR/LocalImageGenerator.iconset"
 ICON_FILE="$BUILD_DIR/LocalImageGenerator.icns"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 INSTALL_BUNDLE="/Applications/$APP_NAME.app"
-DESKTOP_LINK="/Users/danielgoodwyn/Desktop/$APP_NAME.app"
+LEGACY_DESKTOP_LINK="/Users/danielgoodwyn/Desktop/$APP_NAME.app"
 
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
@@ -77,9 +77,9 @@ cp -R "$APP_BUNDLE" "$INSTALL_BUNDLE"
 xattr -cr "$INSTALL_BUNDLE"
 codesign --force --deep --sign - "$INSTALL_BUNDLE"
 
-rm -f "$DESKTOP_LINK"
-ln -s "$INSTALL_BUNDLE" "$DESKTOP_LINK"
+if [ -L "$LEGACY_DESKTOP_LINK" ]; then
+  rm -f "$LEGACY_DESKTOP_LINK"
+fi
 
 codesign --verify --deep --strict "$INSTALL_BUNDLE"
 echo "Installed $INSTALL_BUNDLE"
-echo "Desktop shortcut $DESKTOP_LINK"
