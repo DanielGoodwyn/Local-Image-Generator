@@ -1,0 +1,61 @@
+{
+    "path_checkpoints": [
+        "/Users/danielgoodwyn/src/Local Image Generator/models/checkpoints"
+    ],
+    "path_loras": [
+        "/Users/danielgoodwyn/src/Local Image Generator/models/loras"
+    ],
+    "path_embeddings": "/Users/danielgoodwyn/src/Local Image Generator/models/embeddings",
+    "path_vae_approx": "/Users/danielgoodwyn/src/Local Image Generator/models/vae_approx",
+    "path_vae": "/Users/danielgoodwyn/src/Local Image Generator/models/vae",
+    "path_upscale_models": "/Users/danielgoodwyn/src/Local Image Generator/models/upscale_models",
+    "path_inpaint": "/Users/danielgoodwyn/src/Local Image Generator/models/inpaint",
+    "path_controlnet": "/Users/danielgoodwyn/src/Local Image Generator/models/controlnet",
+    "path_clip_vision": "/Users/danielgoodwyn/src/Local Image Generator/models/clip_vision",
+    "path_local_image_generator_expansion": "/Users/danielgoodwyn/src/Local Image Generator/models/prompt_expansion/local_image_generator_expansion",
+    "path_wildcards": "/Users/danielgoodwyn/src/Local Image Generator/wildcards",
+    "path_safety_checker": "/Users/danielgoodwyn/src/Local Image Generator/models/safety_checker",
+    "path_sam": "/Users/danielgoodwyn/src/Local Image Generator/models/sam",
+    "path_outputs": "/Users/danielgoodwyn/Pictures/Local Image Generator",
+    "default_advanced_checkbox": true,
+    "default_styles": [
+        "Prompt Expansion",
+        "Image Enhance",
+        "Image Sharp"
+    ],
+    "default_performance": "Speed",
+    "default_prompt_negative": "text, letters, watermark, logo, blurry, low quality, distorted anatomy, extra limbs, bad eyes, oversaturated, cartoon, illustration, painting, plastic skin, noisy, cropped subject",
+    "default_image_number": 1,
+    "default_output_format": "png",
+    "available_aspect_ratios": [
+        "640*640",
+        "704*1408",
+        "704*1344",
+        "768*1344",
+        "768*1280",
+        "832*1216",
+        "832*1152",
+        "896*1152",
+        "896*1088",
+        "960*1088",
+        "960*1024",
+        "1024*1024",
+        "1024*960",
+        "1088*960",
+        "1088*896",
+        "1152*896",
+        "1152*832",
+        "1216*832",
+        "1280*768",
+        "1344*768",
+        "1344*704",
+        "1408*704",
+        "1472*704",
+        "1536*640",
+        "1600*640",
+        "1664*576",
+        "1728*576"
+    ],
+    "default_aspect_ratio": "640*640",
+    "default_overwrite_step": 16
+}

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daniel's Local Image Generator Walkthrough</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7f8;
+      --panel: #ffffff;
+      --ink: #18202a;
+      --muted: #5b6673;
+      --line: #d7dde4;
+      --accent: #136f63;
+      --accent-bg: #e5f4f1;
+      --warn: #9b4d00;
+      --warn-bg: #fff2df;
+      --code: #111827;
+      --code-bg: #eef1f5;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101316;
+        --panel: #171c21;
+        --ink: #eef2f7;
+        --muted: #aab4c0;
+        --line: #2e3742;
+        --accent: #79d0c3;
+        --accent-bg: #102b28;
+        --warn: #ffc073;
+        --warn-bg: #332314;
+        --code: #f5f7fb;
+        --code-bg: #222a33;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    main {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+
+    h1 { font-size: 34px; }
+    h2 { font-size: 22px; margin-top: 28px; }
+    h3 { font-size: 18px; margin-top: 20px; }
+
+    p { margin: 0 0 14px; }
+    a { color: var(--accent); }
+
+    .muted { color: var(--muted); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .good {
+      background: var(--accent-bg);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+    }
+
+    .warn {
+      background: var(--warn-bg);
+      border-color: color-mix(in srgb, var(--warn) 35%, var(--line));
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 650;
+      width: 28%;
+    }
+
+    tr:last-child th,
+    tr:last-child td { border-bottom: 0; }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+    }
+
+    code {
+      background: var(--code-bg);
+      color: var(--code);
+      border-radius: 4px;
+      padding: 2px 5px;
+    }
+
+    pre {
+      background: var(--code-bg);
+      color: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 14px;
+      margin: 12px 0 16px;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+    }
+
+    ol, ul { padding-left: 22px; }
+
+    .ui-map {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .ui-row {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 12px;
+      align-items: start;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .ui-label {
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .badge {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin: 2px 4px 2px 0;
+      background: var(--panel);
+      white-space: nowrap;
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .toc a {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      text-decoration: none;
+      background: var(--panel);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Daniel's Local Image Generator Walkthrough</h1>
+      <p class="muted">Last verified: 2026-06-19 12:34 PDT</p>
+      <p>This is the practical local guide for <strong>Local Image Generator</strong> on this Mac.</p>
+      <nav class="toc" aria-label="Sections">
+        <a href="#state">Current State</a>
+        <a href="#start">Start</a>
+        <a href="#defaults">Defaults</a>
+        <a href="#ui">UI Map</a>
+        <a href="#prompts">Prompts</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+      </nav>
+    </header>
+
+    <section id="state">
+      <h2>Current State</h2>
+      <table>
+        <tr><th>Desktop app</th><td><code>/Users/danielgoodwyn/Desktop/Local Image Generator.app</code></td></tr>
+        <tr><th>Applications copy</th><td><code>/Users/danielgoodwyn/Applications/Local Image Generator.app</code></td></tr>
+        <tr><th>Backend source</th><td><code>/Users/danielgoodwyn/src/Local Image Generator</code></td></tr>
+        <tr><th>Internal local URL</th><td><a href="http://127.0.0.1:7865/">http://127.0.0.1:7865/</a></td></tr>
+        <tr><th>Python environment</th><td><code>/Users/danielgoodwyn/src/Local Image Generator/.venv-mvp</code></td></tr>
+        <tr><th>Output folder</th><td><code>/Users/danielgoodwyn/Pictures/Local Image Generator</code></td></tr>
+        <tr><th>Model checkpoint</th><td><code>/Users/danielgoodwyn/src/Local Image Generator/models/checkpoints/juggernautXL_v8Rundiffusion.safetensors</code></td></tr>
+        <tr><th>Latest desktop proof image</th><td><code>/Users/danielgoodwyn/Pictures/Local Image Generator/local-image-generator-proof-red-panda.png</code></td></tr>
+      </table>
+    </section>
+
+    <section id="start">
+      <h2>Start the App</h2>
+      <p>Open this app icon:</p>
+      <pre><code>/Users/danielgoodwyn/Desktop/Local Image Generator.app</code></pre>
+      <p>The app starts or reuses the local backend automatically, opens the generator in a native window, and shows saved images in the right-side gallery panel.</p>
+      <p>Preferred desktop workflow:</p>
+      <ol>
+        <li>Type the prompt into the native <strong>Prompt</strong> field at the top of the app.</li>
+        <li>Type an optional deterministic filename into the native <strong>Filename</strong> field.</li>
+        <li>Click <strong>Generate image</strong>.</li>
+        <li>Watch the right-side <strong>Saved images</strong> panel for the new image.</li>
+      </ol>
+      <p>The embedded advanced generator UI remains available below the native controls for settings, styles, and debugging.</p>
+      <p>Fallback/debug command:</p>
+      <p>Run this from Terminal only if you need to debug the backend directly:</p>
+      <pre><code>cd /Users/danielgoodwyn/src/Local Image Generator
+PYTHONUNBUFFERED=1 \
+PYTORCH_ENABLE_MPS_FALLBACK=1 \
+GRADIO_SERVER_PORT=7865 \
+TOKENIZERS_PARALLELISM=false \
+.venv-mvp/bin/python launch.py \
+  --always-no-vram \
+  --attention-split \
+  --vae-in-cpu \
+  --all-in-fp16 \
+  --disable-in-browser</code></pre>
+      <p>Then open the internal local URL only for debugging: <a href="http://127.0.0.1:7865/">http://127.0.0.1:7865/</a>.</p>
+    </section>
+
+    <section id="defaults">
+      <h2>Good Local Defaults</h2>
+      <div class="panel good">
+        <p>These defaults are set in <code>/Users/danielgoodwyn/src/Local Image Generator/config.txt</code> to avoid the connection errors seen with larger runs.</p>
+      </div>
+      <table>
+        <tr><th>Advanced</th><td>On, so the settings and filename field are visible immediately.</td></tr>
+        <tr><th>Performance</th><td><span class="badge">Speed</span></td></tr>
+        <tr><th>Image Number</th><td><span class="badge">1</span></td></tr>
+        <tr><th>Aspect Ratio</th><td><span class="badge">640x640</span></td></tr>
+        <tr><th>Output Format</th><td><span class="badge">png</span></td></tr>
+        <tr><th>Sampling Steps</th><td><span class="badge">16</span> through the local step override.</td></tr>
+        <tr><th>Negative Prompt</th><td>Prefilled quality guard against text, logos, watermarks, blur, bad anatomy, and noisy/cropped output.</td></tr>
+      </table>
+      <div class="panel warn">
+        <p>Do not use <code>Quality</code>, <code>1152x896</code>, and <code>2</code> images together on this machine unless free disk space is healthy and you are prepared for slower runs. That combination caused Chrome to show <code>Connection errored out</code>.</p>
+      </div>
+    </section>
+
+    <section id="ui">
+      <h2>UI Map</h2>
+      <div class="ui-map">
+        <div class="ui-row"><div class="ui-label">Native top bar</div><div><strong>Prompt</strong>, <strong>Filename</strong>, and <strong>Generate image</strong>.</div></div>
+        <div class="ui-row"><div class="ui-label">Embedded generator</div><div>Prompt box, image preview, and <strong>Generate</strong> button for advanced direct use.</div></div>
+        <div class="ui-row"><div class="ui-label">Bottom toggles</div><div><span class="badge">Input Image</span><span class="badge">Enhance</span><span class="badge">Advanced checked</span></div></div>
+        <div class="ui-row"><div class="ui-label">Settings tab</div><div>Performance, Aspect Ratios, Image Number, Output Format, <strong>Output Filename</strong>, Negative Prompt.</div></div>
+        <div class="ui-row"><div class="ui-label">Advanced tab</div><div>Developer Debug Mode, forced sampling step override, preview controls.</div></div>
+      </div>
+
+      <h3>Filename Field</h3>
+      <p>Use the native <strong>Filename</strong> field at the top of the desktop app for the normal workflow.</p>
+      <p>The embedded <strong>Output Filename</strong> field in the Settings tab is still available for direct advanced UI use.</p>
+      <pre><code>Output Filename: mountain-car</code></pre>
+      <p>The app saves directly as:</p>
+      <pre><code>/Users/danielgoodwyn/Pictures/Local Image Generator/mountain-car.png</code></pre>
+      <p>This is not a rename-after-generation step. The local save pipeline writes this filename deterministically.</p>
+
+      <h3>Latest Desktop Proof</h3>
+      <p>The latest verified desktop-app proof was generated from the native <strong>Prompt</strong>, <strong>Filename</strong>, and <strong>Generate image</strong> controls.</p>
+      <p>Prompt:</p>
+      <pre><code>Photorealistic wildlife portrait of a red panda standing on a mossy branch, soft forest light, detailed fur, bright eyes, natural background, 85mm lens, crisp focus, high detail, realistic photography</code></pre>
+      <p>Filename:</p>
+      <pre><code>local-image-generator-proof-red-panda</code></pre>
+      <p>Output:</p>
+      <pre><code>/Users/danielgoodwyn/Pictures/Local Image Generator/local-image-generator-proof-red-panda.png</code></pre>
+    </section>
+
+    <section id="prompts">
+      <h2>Prompt Recipe</h2>
+      <p>Use one clear subject, one setting, one lighting setup, and one camera/composition phrase.</p>
+      <pre><code>Photorealistic [subject] in [specific setting], [lighting], [camera/lens], [composition], crisp focus, high detail, natural materials, cinematic contrast</code></pre>
+      <p>Good example:</p>
+      <pre><code>Photorealistic race car parked on a rain-slick mountain road at night, bright headlights cutting through mist, wet carbon fiber bodywork, cinematic moonlight rim light, low angle 85mm automotive photography, crisp focus, high detail</code></pre>
+      <p>Avoid contradictions like:</p>
+      <pre><code>racecar resting on a track, headlights looking at camera</code></pre>
+      <p>Better:</p>
+      <pre><code>race car parked on a track, headlights aimed toward the camera</code></pre>
+
+      <h3>Text In Images</h3>
+      <p>The local SDXL backend can make sharp images on this Mac, but exact text inside the generated image is unreliable. If readable lettering matters, generate the image first and add text afterward in an editor or script.</p>
+    </section>
+
+    <section id="troubleshooting">
+      <h2>Troubleshooting</h2>
+      <h3>Chrome Shows <code>Connection errored out</code></h3>
+      <p>Likely causes:</p>
+      <ul>
+        <li>Too large: <code>1152x896</code> or higher.</li>
+        <li>Too many steps: <code>30</code> or <code>60</code>.</li>
+        <li>Too many images: image number <code>2</code> or more.</li>
+        <li>Too little free disk/swap space.</li>
+      </ul>
+      <p>Fix:</p>
+      <ol>
+        <li>Refresh or click <strong>Reconnect</strong>.</li>
+        <li>Use <code>640x640</code>.</li>
+        <li>Use image number <code>1</code>.</li>
+        <li>Keep <code>Speed</code>.</li>
+        <li>Keep the <code>16</code>-step overwrite.</li>
+        <li>Make sure the Mac has several GB free.</li>
+      </ol>
+      <p>Check disk:</p>
+      <pre><code>df -h /Users/danielgoodwyn/Pictures/Local Image Generator</code></pre>
+
+      <h3>App Is Not Responding</h3>
+      <p>Check whether the local backend is listening:</p>
+      <pre><code>lsof -nP -iTCP:7865 -sTCP:LISTEN</code></pre>
+      <p>If nothing is listening, quit and reopen <code>Local Image Generator.app</code>. Use the fallback command above only for debugging.</p>
+
+      <h3>Find Generated Images</h3>
+      <pre><code>find /Users/danielgoodwyn/Pictures/Local Image Generator -maxdepth 2 -type f -name '*.png' -print</code></pre>
+    </section>
+
+    <section id="local-changes">
+      <h2>Local Code Changes</h2>
+      <p>This install is not a pristine upstream checkout. Local changes include:</p>
+      <ul>
+        <li><code>webui.py</code>: added <strong>Output Filename</strong> field and made preview disabled by default.</li>
+        <li><code>modules/async_worker.py</code>: carries the requested filename through generation.</li>
+        <li><code>modules/private_logger.py</code>: saves directly to the requested filename.</li>
+        <li><code>config.txt</code>: sets safe local defaults for this Mac.</li>
+        <li><code>desktop/LocalImageGeneratorApp.swift</code>: native macOS wrapper with prompt/filename controls, an embedded generator view, and saved-image gallery.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

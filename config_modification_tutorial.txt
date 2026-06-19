@@ -1,0 +1,188 @@
+You can modify your "/Users/danielgoodwyn/src/Local Image Generator/config.txt" using the below keys, formats, and examples.
+Do not modify this file. Modifications in this file will not take effect.
+This file is a tutorial and example. Please edit "/Users/danielgoodwyn/src/Local Image Generator/config.txt" to really change any settings.
+Remember to split the paths with "\\" rather than "\", and there is no "," before the last "}". 
+
+
+{
+    "path_checkpoints": [
+        "/Users/danielgoodwyn/src/Local Image Generator/models/checkpoints"
+    ],
+    "path_loras": [
+        "/Users/danielgoodwyn/src/Local Image Generator/models/loras"
+    ],
+    "path_embeddings": "/Users/danielgoodwyn/src/Local Image Generator/models/embeddings",
+    "path_vae_approx": "/Users/danielgoodwyn/src/Local Image Generator/models/vae_approx",
+    "path_vae": "/Users/danielgoodwyn/src/Local Image Generator/models/vae",
+    "path_upscale_models": "/Users/danielgoodwyn/src/Local Image Generator/models/upscale_models",
+    "path_inpaint": "/Users/danielgoodwyn/src/Local Image Generator/models/inpaint",
+    "path_controlnet": "/Users/danielgoodwyn/src/Local Image Generator/models/controlnet",
+    "path_clip_vision": "/Users/danielgoodwyn/src/Local Image Generator/models/clip_vision",
+    "path_local_image_generator_expansion": "/Users/danielgoodwyn/src/Local Image Generator/models/prompt_expansion/local_image_generator_expansion",
+    "path_wildcards": "/Users/danielgoodwyn/src/Local Image Generator/wildcards",
+    "path_safety_checker": "/Users/danielgoodwyn/src/Local Image Generator/models/safety_checker",
+    "path_sam": "/Users/danielgoodwyn/src/Local Image Generator/models/sam",
+    "path_outputs": "/Users/danielgoodwyn/Pictures/Local Image Generator",
+    "temp_path": "/var/folders/0p/l68hsm197mz_mq_v55x40rpw0000gn/T/local_image_generator",
+    "temp_path_cleanup_on_launch": true,
+    "default_model": "juggernautXL_v8Rundiffusion.safetensors",
+    "previous_default_models": [
+        "juggernautXL_version8Rundiffusion.safetensors",
+        "juggernautXL_version7Rundiffusion.safetensors",
+        "juggernautXL_v7Rundiffusion.safetensors",
+        "juggernautXL_version6Rundiffusion.safetensors",
+        "juggernautXL_v6Rundiffusion.safetensors"
+    ],
+    "default_refiner": "None",
+    "default_refiner_switch": 0.5,
+    "default_loras_min_weight": -2,
+    "default_loras_max_weight": 2,
+    "default_loras": [
+        [
+            true,
+            "sd_xl_offset_example-lora_1.0.safetensors",
+            0.1
+        ],
+        [
+            true,
+            "None",
+            1.0
+        ],
+        [
+            true,
+            "None",
+            1.0
+        ],
+        [
+            true,
+            "None",
+            1.0
+        ],
+        [
+            true,
+            "None",
+            1.0
+        ]
+    ],
+    "default_max_lora_number": 5,
+    "default_cfg_scale": 4.0,
+    "default_sample_sharpness": 2.0,
+    "default_sampler": "dpmpp_2m_sde_gpu",
+    "default_scheduler": "karras",
+    "default_vae": "Default (model)",
+    "default_styles": [
+        "Prompt Expansion",
+        "Image Enhance",
+        "Image Sharp"
+    ],
+    "default_prompt_negative": "text, letters, watermark, logo, blurry, low quality, distorted anatomy, extra limbs, bad eyes, oversaturated, cartoon, illustration, painting, plastic skin, noisy, cropped subject",
+    "default_prompt": "",
+    "default_performance": "Speed",
+    "default_image_prompt_checkbox": false,
+    "default_enhance_checkbox": false,
+    "default_advanced_checkbox": true,
+    "default_developer_debug_mode_checkbox": false,
+    "default_image_prompt_advanced_checkbox": false,
+    "default_max_image_number": 32,
+    "default_output_format": "png",
+    "default_image_number": 1,
+    "checkpoint_downloads": {
+        "juggernautXL_v8Rundiffusion.safetensors": "https://huggingface.co/lllyasviel/fav_models/resolve/main/fav/juggernautXL_v8Rundiffusion.safetensors"
+    },
+    "lora_downloads": {
+        "sd_xl_offset_example-lora_1.0.safetensors": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_offset_example-lora_1.0.safetensors"
+    },
+    "embeddings_downloads": {},
+    "vae_downloads": {},
+    "available_aspect_ratios": [
+        "640*640",
+        "704*1408",
+        "704*1344",
+        "768*1344",
+        "768*1280",
+        "832*1216",
+        "832*1152",
+        "896*1152",
+        "896*1088",
+        "960*1088",
+        "960*1024",
+        "1024*1024",
+        "1024*960",
+        "1088*960",
+        "1088*896",
+        "1152*896",
+        "1152*832",
+        "1216*832",
+        "1280*768",
+        "1344*768",
+        "1344*704",
+        "1408*704",
+        "1472*704",
+        "1536*640",
+        "1600*640",
+        "1664*576",
+        "1728*576"
+    ],
+    "default_aspect_ratio": "640*640",
+    "default_inpaint_engine_version": "v2.6",
+    "default_selected_image_input_tab_id": "uov_tab",
+    "default_uov_method": "Disabled",
+    "default_controlnet_image_count": 4,
+    "default_ip_image_1": "None",
+    "default_ip_type_1": "ImagePrompt",
+    "default_ip_stop_at_1": 0.5,
+    "default_ip_weight_1": 0.6,
+    "default_ip_image_2": "None",
+    "default_ip_type_2": "ImagePrompt",
+    "default_ip_stop_at_2": 0.5,
+    "default_ip_weight_2": 0.6,
+    "default_ip_image_3": "None",
+    "default_ip_type_3": "ImagePrompt",
+    "default_ip_stop_at_3": 0.5,
+    "default_ip_weight_3": 0.6,
+    "default_ip_image_4": "None",
+    "default_ip_type_4": "ImagePrompt",
+    "default_ip_stop_at_4": 0.5,
+    "default_ip_weight_4": 0.6,
+    "default_inpaint_advanced_masking_checkbox": false,
+    "default_inpaint_method": "Inpaint or Outpaint (default)",
+    "default_cfg_tsnr": 7.0,
+    "default_clip_skip": 2,
+    "default_overwrite_step": 16,
+    "default_overwrite_switch": -1,
+    "default_overwrite_upscale": -1,
+    "example_inpaint_prompts": [
+        "highly detailed face",
+        "detailed girl face",
+        "detailed man face",
+        "detailed hand",
+        "beautiful eyes"
+    ],
+    "example_enhance_detection_prompts": [
+        "face",
+        "eye",
+        "mouth",
+        "hair",
+        "hand",
+        "body"
+    ],
+    "default_enhance_tabs": 3,
+    "default_enhance_uov_method": "Disabled",
+    "default_enhance_uov_processing_order": "Before First Enhancement",
+    "default_enhance_uov_prompt_type": "Original Prompts",
+    "default_sam_max_detections": 0,
+    "default_black_out_nsfw": false,
+    "default_save_only_final_enhanced_image": false,
+    "default_save_metadata_to_images": false,
+    "default_metadata_scheme": "local_image_generator",
+    "metadata_created_by": "",
+    "default_invert_mask_checkbox": false,
+    "default_inpaint_mask_model": "isnet-general-use",
+    "default_enhance_inpaint_mask_model": "sam",
+    "default_inpaint_mask_cloth_category": "full",
+    "default_inpaint_mask_sam_model": "vit_b",
+    "default_describe_apply_prompts_checkbox": true,
+    "default_describe_content_type": [
+        "Photograph"
+    ]
+}
